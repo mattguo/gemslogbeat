@@ -1,0 +1,13 @@
+cfg:
+  patterns:
+    segment: ^(?<ts>[^\s]+)[\s]+CEF:1\s*\|\s*[^\s]*\s*\|\s*(?<appName>[^\s]*)\s*\|\s*[^\s]*\s*\|\s*(?<level>[^\s]+)\s*\|\s*[^\s]*\s*\|\s*[^\s]*\s*\|\s*ID=[^\s]*[\s]+THR=(?<thr>[^\s]+)[\s]+CAT=(?<cat>[^\s]+)[\s]+MSG=(?<msg>.+)
+    lineHeader: ^\d\d\d\d-\d\d-\d\dT
+    filters:
+      - regex: (?<email>[\w\.\-]+@[\w\.\-]+)
+      - regex: ^Started sync request
+        tag: start_sync
+      - regex: finished syncing,
+        tag: end_sync
+      - regex: Received notification event
+        tag: recv_note
+      - regex: Calling (?<push>\w+) Relay at
