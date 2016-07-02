@@ -6,7 +6,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.collect.Lists;
@@ -14,16 +16,20 @@ import com.mattguo.gemslogbeat.config.Cfg;
 import com.mattguo.gemslogbeat.config.EntryFilter;
 
 public class Dispatcher {
-    private static DateTimeFormatter iso = ISODateTimeFormat.dateTime();
+    //private static DateTimeFormatter iso = ISODateTimeFormat.dateTime();
+	private static DateTimeFormatter iso = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
     List<Pattern> patterns = Lists.newArrayList();
     List<String[]> groupNames = Lists.newArrayList();
 
     public Dispatcher() {
-        for(EntryFilter filter : Cfg.one().filters()) {
-            patterns.add(Pattern.compile(filter.regex()));
-            groupNames.add(Util.findGroupName(filter.regex()));
-        }
+//        for(EntryFilter filter : Cfg.one().filters()) {
+//            patterns.add(Pattern.compile(filter.regex()));
+//            groupNames.add(Util.findGroupName(filter.regex()));
+//        }
+		String regex = "^(?<timestamp>[^,]+),(?<message>.+)";
+		patterns.add(Pattern.compile(regex));
+		groupNames.add(RegexUtil.findGroupName(regex));
     }
 
     List<IndexedEntry> cachedEntries = Lists.newArrayList();
@@ -48,10 +54,10 @@ public class Dispatcher {
             if (matcher.find()) {
                 for(int j = 0; j < matcher.groupCount(); j++) {
                     if ("timestamp".equals(names[j])) {
-                        DateTime dateTime = iso.parseDateTime(matcher.group(j));
+                        DateTime dateTime = iso.parseDateTime(matcher.group(j + 1));
                         indexedLine.getProperties().put("@timestamp", dateTime.toDate());
                     } else {
-                        indexedLine.getProperties().put(names[j], matcher.group(j));
+                        indexedLine.getProperties().put(names[j], matcher.group(j + 1));
                     }
                 }
             }
@@ -63,7 +69,7 @@ public class Dispatcher {
 
         cachedEntries.add(indexedLine);
         if (cachedEntries.size() >= 10000) {
-            uploader.uploadAsync("gems-test", "gems", cachedEntries);
+            uploader.uploadAsync("first-jpmc", "sql", cachedEntries);
             cachedEntries.clear();
             while(true) {
                 int pendingUploads = uploader.pendingUploads();

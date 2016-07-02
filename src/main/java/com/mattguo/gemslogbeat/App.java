@@ -17,7 +17,7 @@ public class App {
         LogFileReader fr = new LogFileReader();
         StopWatch sw = new StopWatch();
         sw.start();
-        fr.readDir("F:\\logs\\FIRST-11590\\5-23-2016 - Gems-GP-GC-Client Logs\\GEMS Logs\\chapdc3gdgem02");
+        fr.readDir("C:\\Users\\matt\\Downloads\\logs\\csv");
         System.out.println(sw.toString());
     }
 
