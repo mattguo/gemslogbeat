@@ -33,11 +33,11 @@ public class Cfg {
         ClasspathConfigurationSource source = new ClasspathConfigurationSource(configFilesProvider);
         provider = new ConfigurationProviderBuilder().withConfigurationSource(source).build();
 
-        final PatternsConfig patternsCfg = provider.bind("cfg.patterns", PatternsConfig.class);
+        final EntryFilter[] filters = provider.bind("cfg.filters", EntryFilter[].class);
         cfg = new MyConfig() {
             @Override
-            public PatternsConfig patterns() {
-                return patternsCfg;
+            public EntryFilter[] filters() {
+                return filters;
             }
         };
     }
