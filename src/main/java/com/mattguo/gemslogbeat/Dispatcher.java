@@ -8,22 +8,20 @@ import java.util.regex.Pattern;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.mattguo.gemslogbeat.config.Cfg;
 import com.mattguo.gemslogbeat.config.EntryFilter;
 
 public class Dispatcher {
     private static DateTimeFormatter iso = ISODateTimeFormat.dateTime();
-
-    List<Pattern> patterns = Lists.newArrayList();
-    List<String[]> groupNames = Lists.newArrayList();
+    private static final Logger LOGGER = LoggerFactory.getLogger(Dispatcher.class);
 
     public Dispatcher() {
-        for(EntryFilter filter : Cfg.one().filters()) {
-            patterns.add(Pattern.compile(filter.regex()));
-            groupNames.add(Util.findGroupName(filter.regex()));
-        }
     }
 
     List<IndexedEntry> cachedEntries = Lists.newArrayList();
@@ -34,25 +32,39 @@ public class Dispatcher {
         uploader.open("localhost", 9300);
     }
 
-    public void onNewLine(String line) {
+    public void onNewLine(final String line, final String host) {
         //Merge new line
         GemsLogLine indexedLine = new GemsLogLine();
-        for(int i = 0; i < patterns.size(); i++) {
-            Pattern p = patterns.get(i);
-            String[] names = groupNames.get(i);
-            String message = indexedLine.getStringProperty("message");
+        indexedLine.getProperties().put("host", host);
+        for (EntryFilter filter : Cfg.one().getFilters()) {
+            if (!Strings.isNullOrEmpty(filter.getHasProp()) && !indexedLine.getProperties().containsKey(filter.getHasProp())) {
+                continue;
+            }
+
+            Pattern p = filter.getPattern();
+            String[] names = filter.getGroupNames();
+            String message = null;
+            if (!Strings.isNullOrEmpty(filter.getField())) {
+                message = indexedLine.getStringProperty(filter.getField());
+            }
             if (message == null)
                 message = line;
 
             Matcher matcher = p.matcher(message);
             if (matcher.find()) {
-                for(int j = 0; j < matcher.groupCount(); j++) {
-                    if ("timestamp".equals(names[j])) {
+                for (int j = 1; j <= matcher.groupCount(); j++) {
+                    String groupName = names[j - 1];
+                    if ("timestamp".equals(groupName)) {
                         DateTime dateTime = iso.parseDateTime(matcher.group(j));
                         indexedLine.getProperties().put("@timestamp", dateTime.toDate());
                     } else {
-                        indexedLine.getProperties().put(names[j], matcher.group(j));
+                        indexedLine.getProperties().put(groupName, matcher.group(j));
                     }
+                }
+
+                if (!Strings.isNullOrEmpty(filter.getAddTag())) {
+                    for(String tag : Splitter.on(',').split(filter.getAddTag()))
+                        indexedLine.getTags().add(tag);
                 }
             }
         }
@@ -67,11 +79,11 @@ public class Dispatcher {
             cachedEntries.clear();
             while(true) {
                 int pendingUploads = uploader.pendingUploads();
-                System.out.println("Pending uploads: " + pendingUploads);
+                LOGGER.info("Pending uploads: {}", pendingUploads);
                 if (pendingUploads < 64)
                     break;
                 else {
-                    System.out.println("Sleep for 500ms to wait for uploader.");
+                    LOGGER.info("Sleep for 500ms to wait for uploader.");
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
@@ -87,6 +99,6 @@ public class Dispatcher {
             cachedEntries.clear();
         }
         uploader.close(true);
-        System.out.println("Dispatcher closed");
+        LOGGER.info("Dispatcher closed");
     }
 }

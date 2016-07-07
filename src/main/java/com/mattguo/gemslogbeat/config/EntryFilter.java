@@ -1,11 +1,68 @@
 package com.mattguo.gemslogbeat.config;
 
-public interface EntryFilter {
-    String regex();
-    String field();
-    String addTag();
-    String hasTag();
-    String hasProp();
-    //TODO private String typecast
-    //TODO private String condition
+import java.util.regex.Pattern;
+
+import com.mattguo.gemslogbeat.Util;
+
+public class EntryFilter {
+    private String regex;
+    private String field = "message";
+    private String addTag;
+    private String hasTag;
+    private String hasProp; //one kind of condition
+    // TODO private String typecast
+    // TODO private String condition
+
+    public String getRegex() {
+        return regex;
+    }
+
+    public void setRegex(String regex) {
+        this.regex = regex;
+        this.pattern = Pattern.compile(regex);
+        this.groupNames = Util.findGroupName(regex);
+    }
+
+    public String getField() {
+        return field;
+    }
+
+    public void setField(String field) {
+        this.field = field;
+    }
+
+    public String getAddTag() {
+        return addTag;
+    }
+
+    public void setAddTag(String addTag) {
+        this.addTag = addTag;
+    }
+
+    public String getHasTag() {
+        return hasTag;
+    }
+
+    public void setHasTag(String hasTag) {
+        this.hasTag = hasTag;
+    }
+
+    public String getHasProp() {
+        return hasProp;
+    }
+
+    public void setHasProp(String hasProp) {
+        this.hasProp = hasProp;
+    }
+
+    private Pattern pattern;
+    private String[] groupNames;
+
+    public Pattern getPattern() {
+        return pattern;
+    }
+
+    public String[] getGroupNames() {
+        return groupNames;
+    }
 }

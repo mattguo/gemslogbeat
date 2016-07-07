@@ -2,6 +2,8 @@ package com.mattguo.gemslogbeat;
 
 import org.apache.commons.lang3.time.StopWatch;
 
+import com.mattguo.gemslogbeat.config.Cfg;
+
 public class App {
 
     public static void main(String[] args) throws InterruptedException {
@@ -17,8 +19,9 @@ public class App {
         LogFileReader fr = new LogFileReader();
         StopWatch sw = new StopWatch();
         sw.start();
-        fr.readDir("F:\\logs\\FIRST-11590\\5-23-2016 - Gems-GP-GC-Client Logs\\GEMS Logs\\chapdc3gdgem02");
-        System.out.println(sw.toString());
+        fr.readDir("F:\\logs\\FIRST-11590\\5-23-2016 - Gems-GP-GC-Client Logs\\GEMS Logs");
+        System.out.println(Cfg.one().getLineHeader());
+        System.out.println("Elapsed time: " + sw.toString());
     }
 
 }

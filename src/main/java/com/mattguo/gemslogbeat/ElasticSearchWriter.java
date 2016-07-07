@@ -19,6 +19,7 @@ public class ElasticSearchWriter {
     private Client client;
     ListeningExecutorService uploadExectuor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
     AtomicInteger pendingUploading;
+    AtomicInteger uploaded;
     AtomicInteger id;
 
     public ElasticSearchWriter() {
@@ -29,6 +30,7 @@ public class ElasticSearchWriter {
         client = TransportClient.builder().build()
                 .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
         pendingUploading = new AtomicInteger(0);
+        uploaded = new AtomicInteger(0);
         id = new AtomicInteger(0);
     }
 
@@ -42,7 +44,7 @@ public class ElasticSearchWriter {
             return;
         }
 
-        while(true) {
+        while (true) {
             if (pendingUploading.get() <= 0) {
                 client.close();
                 return;
@@ -56,7 +58,7 @@ public class ElasticSearchWriter {
 
     public void uploadAsync(String index, String type, List<IndexedEntry> entries) {
         final BulkRequestBuilder bulkRequest = client.prepareBulk();
-        for(IndexedEntry entry : entries) {
+        for (IndexedEntry entry : entries) {
             bulkRequest.add(client.prepareIndex(index, type, Integer.toString(id.incrementAndGet())).setSource(entry.toEsJson()));
         }
         pendingUploading.incrementAndGet();
@@ -65,11 +67,12 @@ public class ElasticSearchWriter {
             @Override
             public void run() {
                 BulkResponse bulkResponse = bulkRequest.get();
-                pendingUploading.decrementAndGet();
+                int pendingVal = pendingUploading.decrementAndGet();
+                int uploadedVal = uploaded.incrementAndGet();
                 if (bulkResponse.hasFailures()) {
-                    System.out.println("Bulk upload failed:" + bulkResponse.buildFailureMessage());
+                    System.out.println("Bulk upload Failed. pending:" + pendingVal + ", uploaded:" + uploadedVal + ", err:" + bulkResponse.buildFailureMessage());
                 } else {
-                    System.out.println("Bulk upload finished");
+                    System.out.println("Bulk upload finished. pending:" + pendingVal + ", uploaded:" + uploadedVal);
                 }
             }
         });
