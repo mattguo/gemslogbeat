@@ -16,14 +16,17 @@ public class LogFileReader {
     //private static Pattern segmentsPattern = Pattern.compile(Config.getInstance().getString("pattern", "segment", ""));
     //private static Pattern lineHeaderPattern = Pattern.compile(Config.getInstance().getString("pattern", "lineheader", ""));
 
+	public static final String UTF8_BOM = "\uFEFF";
+	
     private Dispatcher dispatcher;
 
     final static Pattern fileNamePattern = Pattern.compile("([^\\s\\\\/]+)_\\d\\d\\d\\d-\\d\\d-\\d\\d-\\d\\d-\\d\\d\\.log$");
 
-    public LogFileReader() {
-    }
+    private Multiline multiline;
 
-    private String previousLine = "";
+    public LogFileReader() {
+    	multiline= new Multiline("^\\d\\d\\d\\d"); 
+    }
 
     public void readDir(String dir) {
         dispatcher = new Dispatcher();
@@ -53,6 +56,13 @@ public class LogFileReader {
         }
     }
 
+    private static String removeUTF8BOM(String s) {
+        if (s.startsWith(UTF8_BOM)) {
+            s = s.substring(1);
+        }
+        return s;
+    }
+    
     private void read(String file) {
         Matcher m = fileNamePattern.matcher(file);
         String host = "";
@@ -63,12 +73,24 @@ public class LogFileReader {
         }
         try {
             FileInputStream fstream = new FileInputStream(file);
-            BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+            BufferedReader br = new BufferedReader(new InputStreamReader(fstream, "UTF8"));
             String line;
 
+            boolean firstLine = true;
+            
             while ((line = br.readLine()) != null) {
-                dispatcher.onNewLine(line, host);
+            	if (firstLine) {
+            		line = removeUTF8BOM(line);
+                    firstLine = false;
+                }
+            	String newLine = multiline.addLine(line);
+            	if(newLine != null)
+                dispatcher.onNewLine(newLine, host);
             }
+            String newLine = multiline.remainingString();
+            if(newLine != null)
+                dispatcher.onNewLine(newLine, host);
+            		
             // Close the input stream
             fstream.close();
         } catch (Exception ex) {// Catch exception if any
