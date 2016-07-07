@@ -2,7 +2,7 @@ package com.mattguo.gemslogbeat.config;
 
 import java.util.regex.Pattern;
 
-import com.mattguo.gemslogbeat.Util;
+import com.mattguo.gemslogbeat.RegexUtil;
 
 public class EntryFilter {
     private String regex;
@@ -20,7 +20,7 @@ public class EntryFilter {
     public void setRegex(String regex) {
         this.regex = regex;
         this.pattern = Pattern.compile(regex);
-        this.groupNames = Util.findGroupName(regex);
+        this.groupNames = RegexUtil.findGroupName(regex);
     }
 
     public String getField() {

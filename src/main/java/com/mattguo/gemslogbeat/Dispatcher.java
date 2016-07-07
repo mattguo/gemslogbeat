@@ -6,9 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +18,8 @@ import com.mattguo.gemslogbeat.config.Cfg;
 import com.mattguo.gemslogbeat.config.EntryFilter;
 
 public class Dispatcher {
-    //private static DateTimeFormatter iso = ISODateTimeFormat.dateTime();
-	private static DateTimeFormatter iso = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private static DateTimeFormatter iso = ISODateTimeFormat.dateTime();
+	//private static DateTimeFormatter iso = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static final Logger LOGGER = LoggerFactory.getLogger(Dispatcher.class);
 
     public Dispatcher() {
