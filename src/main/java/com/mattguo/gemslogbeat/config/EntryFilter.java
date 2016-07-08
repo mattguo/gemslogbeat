@@ -10,6 +10,7 @@ public class EntryFilter {
     private String addTag;
     private String hasTag;
     private String hasProp; //one kind of condition
+    private LatencyCheck latency;
     // TODO private String typecast
     // TODO private String condition
 
@@ -19,7 +20,7 @@ public class EntryFilter {
 
     public void setRegex(String regex) {
         this.regex = regex;
-        this.pattern = Pattern.compile(regex);
+        this.pattern = Pattern.compile(regex, Pattern.DOTALL);
         this.groupNames = RegexUtil.findGroupName(regex);
     }
 
@@ -53,6 +54,14 @@ public class EntryFilter {
 
     public void setHasProp(String hasProp) {
         this.hasProp = hasProp;
+    }
+
+    public LatencyCheck getLatency() {
+        return latency;
+    }
+
+    public void setLatency(LatencyCheck latency) {
+        this.latency = latency;
     }
 
     private Pattern pattern;

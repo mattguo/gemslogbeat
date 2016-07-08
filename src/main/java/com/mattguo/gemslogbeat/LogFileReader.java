@@ -11,13 +11,15 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mattguo.gemslogbeat.config.Cfg;
+
 public class LogFileReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogFileReader.class);
     //private static Pattern segmentsPattern = Pattern.compile(Config.getInstance().getString("pattern", "segment", ""));
     //private static Pattern lineHeaderPattern = Pattern.compile(Config.getInstance().getString("pattern", "lineheader", ""));
 
 	public static final String UTF8_BOM = "\uFEFF";
-	
+
     private Dispatcher dispatcher;
 
     final static Pattern fileNamePattern = Pattern.compile("([^\\s\\\\/]+)_\\d\\d\\d\\d-\\d\\d-\\d\\d-\\d\\d-\\d\\d\\.log$");
@@ -25,10 +27,10 @@ public class LogFileReader {
     private Multiline multiline;
 
     public LogFileReader() {
-    	multiline= new Multiline("^\\d\\d\\d\\d"); 
+    	multiline= new Multiline(Cfg.one().getLineHeader());
     }
 
-    public void readDir(String dir) {
+    public void readDirs(String[] dirs) {
         dispatcher = new Dispatcher();
         try {
             dispatcher.open();
@@ -37,7 +39,8 @@ public class LogFileReader {
             return;
         }
 
-        readDir(dir, dispatcher);
+        for(String dir : dirs)
+            readDir(dir, dispatcher);
 
         dispatcher.close();
     }
@@ -62,7 +65,7 @@ public class LogFileReader {
         }
         return s;
     }
-    
+
     private void read(String file) {
         Matcher m = fileNamePattern.matcher(file);
         String host = "";
@@ -77,7 +80,7 @@ public class LogFileReader {
             String line;
 
             boolean firstLine = true;
-            
+
             while ((line = br.readLine()) != null) {
             	if (firstLine) {
             		line = removeUTF8BOM(line);
@@ -85,12 +88,12 @@ public class LogFileReader {
                 }
             	String newLine = multiline.addLine(line);
             	if(newLine != null)
-                dispatcher.onNewLine(newLine, host);
+            	    dispatcher.onNewLine(newLine, host);
             }
             String newLine = multiline.remainingString();
             if(newLine != null)
                 dispatcher.onNewLine(newLine, host);
-            		
+
             // Close the input stream
             fstream.close();
         } catch (Exception ex) {// Catch exception if any

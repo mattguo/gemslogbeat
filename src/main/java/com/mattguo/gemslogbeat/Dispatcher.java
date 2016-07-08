@@ -16,10 +16,11 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.mattguo.gemslogbeat.config.Cfg;
 import com.mattguo.gemslogbeat.config.EntryFilter;
+import com.mattguo.gemslogbeat.config.LatencyCheck;
 
 public class Dispatcher {
     private static DateTimeFormatter iso = ISODateTimeFormat.dateTime();
-	//private static DateTimeFormatter iso = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    // private static DateTimeFormatter iso = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static final Logger LOGGER = LoggerFactory.getLogger(Dispatcher.class);
 
     public Dispatcher() {
@@ -28,13 +29,18 @@ public class Dispatcher {
     List<IndexedEntry> cachedEntries = Lists.newArrayList();
     ElasticSearchWriter uploader = new ElasticSearchWriter();
 
+    class LatencyCalcKey {
+        private LatencyCheck latency;
+        private String host;
+    }
+
     public void open() throws UnknownHostException {
         uploader = new ElasticSearchWriter();
-        uploader.open("localhost", 9300);
+        uploader.open(Cfg.one().getEs().getUrl(), Cfg.one().getEs().getPort());
     }
 
     public void onNewLine(final String line, final String host) {
-        //Merge new line
+        // Merge new line
         GemsLogLine indexedLine = new GemsLogLine();
         indexedLine.getProperties().put("host", host);
         for (EntryFilter filter : Cfg.one().getFilters()) {
@@ -42,8 +48,6 @@ public class Dispatcher {
                 continue;
             }
 
-            Pattern p = filter.getPattern();
-            String[] names = filter.getGroupNames();
             String message = null;
             if (!Strings.isNullOrEmpty(filter.getField())) {
                 message = indexedLine.getStringProperty(filter.getField());
@@ -51,34 +55,36 @@ public class Dispatcher {
             if (message == null)
                 message = line;
 
-            Matcher matcher = p.matcher(message);
-            if (matcher.find()) {
-                for (int j = 1; j <= matcher.groupCount(); j++) {
-                    String groupName = names[j - 1];
-                    if ("timestamp".equals(groupName)) {
-                        DateTime dateTime = iso.parseDateTime(matcher.group(j));
-                        indexedLine.getProperties().put("@timestamp", dateTime.toDate());
-                    } else {
-                        indexedLine.getProperties().put(groupName, matcher.group(j));
+            Pattern p = filter.getPattern();
+            if (p != null) {
+                Matcher matcher = p.matcher(message);
+                if (matcher.find()) {
+                    for (String groupName : filter.getGroupNames()) {
+                        if ("timestamp".equals(groupName)) {
+                            DateTime dateTime = iso.parseDateTime(matcher.group(groupName));
+                            indexedLine.getProperties().put("@timestamp", dateTime.toDate());
+                        } else {
+                            indexedLine.getProperties().put(groupName, matcher.group(groupName));
+                        }
                     }
-                }
 
-                if (!Strings.isNullOrEmpty(filter.getAddTag())) {
-                    for(String tag : Splitter.on(',').split(filter.getAddTag()))
-                        indexedLine.getTags().add(tag);
+                    if (!Strings.isNullOrEmpty(filter.getAddTag())) {
+                        for (String tag : Splitter.on(',').split(filter.getAddTag()))
+                            indexedLine.getTags().add(tag);
+                    }
                 }
             }
         }
 
-        //Run through regex to parse message and add tags/properties
+        // Run through regex to parse message and add tags/properties
 
-        //customize logic to calc latency.
+        // customize logic to calc latency.
 
         cachedEntries.add(indexedLine);
         if (cachedEntries.size() >= 10000) {
-            uploader.uploadAsync("gems-test", "gems", cachedEntries);
+            uploader.uploadAsync(Cfg.one().getEs().getIndex(), Cfg.one().getEs().getDoctype(), cachedEntries);
             cachedEntries.clear();
-            while(true) {
+            while (true) {
                 int pendingUploads = uploader.pendingUploads();
                 LOGGER.info("Pending uploads: {}", pendingUploads);
                 if (pendingUploads < 64)
@@ -96,7 +102,7 @@ public class Dispatcher {
 
     public void close() {
         if (cachedEntries.size() > 0) {
-            uploader.uploadAsync("gems-test", "gems", cachedEntries);
+            uploader.uploadAsync(Cfg.one().getEs().getIndex(), Cfg.one().getEs().getDoctype(), cachedEntries);
             cachedEntries.clear();
         }
         uploader.close(true);

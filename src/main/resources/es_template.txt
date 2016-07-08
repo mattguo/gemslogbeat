@@ -30,6 +30,12 @@
                 "host": {
                     "type": "string",
                     "index": "not_analyzed"
+                },
+                "assignAutod": {
+                    "type": "integer"
+                },
+                "assignEws": {
+                    "type": "integer"
                 }
             }
         }

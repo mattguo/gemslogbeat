@@ -25,38 +25,23 @@ public class Cfg {
     private static ConfigurationProvider provider;
 
     static {
-//        ConfigFilesProvider configFilesProvider = new ConfigFilesProvider() {
-//            @Override
-//            public Iterable<Path> getConfigFiles() {
-//                return Lists.newArrayList(Paths.get("config.yaml"));
-//            }
-//        };
-//        ClasspathConfigurationSource source = new ClasspathConfigurationSource(configFilesProvider);
-//        provider = new ConfigurationProviderBuilder().withConfigurationSource(source).build();
-
         URL url = Resources.getResource("config.yaml");
         String yamlText;
         try {
             yamlText = Resources.toString(url, Charsets.UTF_8);
 
             Constructor constructor = new Constructor(MyConfig.class);//Car.class is root
-            TypeDescription carDescription = new TypeDescription(MyConfig.class);
-            carDescription.putListPropertyType("filters", EntryFilter.class);
-            constructor.addTypeDescription(carDescription);
+            TypeDescription myConfigDescription = new TypeDescription(MyConfig.class);
+            myConfigDescription.putListPropertyType("filters", EntryFilter.class);
+            myConfigDescription.putMapPropertyType("es", ElasticSearchConfig.class, ElasticSearchConfig.class);
+            TypeDescription filterDescription = new TypeDescription(EntryFilter.class);
+            filterDescription.putMapPropertyType("latency", LatencyCheck.class, LatencyCheck.class);
+            constructor.addTypeDescription(myConfigDescription);
             Yaml yaml = new Yaml(constructor);
             cfg = (MyConfig)yaml.load(yamlText);
 
         } catch (IOException e) {
             LOGGER.error("Failed to load yaml config", e);
         }
-
-
-//        final EntryFilter[] filters = provider.bind("cfg.filters", EntryFilter[].class);
-//        cfg = new MyConfig() {
-//            @Override
-//            public EntryFilter[] filters() {
-//                return filters;
-//            }
-//        };
     }
 }

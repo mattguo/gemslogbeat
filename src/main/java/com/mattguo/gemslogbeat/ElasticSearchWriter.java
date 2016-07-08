@@ -11,11 +11,15 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
 public class ElasticSearchWriter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchWriter.class);
+
     private Client client;
     ListeningExecutorService uploadExectuor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
     AtomicInteger pendingUploading;
@@ -70,9 +74,9 @@ public class ElasticSearchWriter {
                 int pendingVal = pendingUploading.decrementAndGet();
                 int uploadedVal = uploaded.incrementAndGet();
                 if (bulkResponse.hasFailures()) {
-                    System.out.println("Bulk upload Failed. pending:" + pendingVal + ", uploaded:" + uploadedVal + ", err:" + bulkResponse.buildFailureMessage());
+                    LOGGER.info("Bulk upload Failed. pending:{}, uploaded:{}, err:{}", pendingVal, uploadedVal, bulkResponse.buildFailureMessage());
                 } else {
-                    System.out.println("Bulk upload finished. pending:" + pendingVal + ", uploaded:" + uploadedVal);
+                    LOGGER.info("Bulk upload finished. pending:{}, uploaded:{}", pendingVal, uploadedVal);
                 }
             }
         });
