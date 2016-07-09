@@ -1,34 +1,51 @@
 inputDir:
-  - F:\logs\FIRST-11590\5-23-2016 - Gems-GP-GC-Client Logs\GEMS Logs
+  - F:\logs\psr\wiblogs_gbs66
 es:
   url: localhost
   port: 9300
   index: gems-test
   doctype: gems
+  uploadBulkSize: 10000
+  timeoutSeconds: 30
+  retryCount: 3
 lineHeader: ^\d\d\d\d-\d\d-\d\dT
-filters:
-  - regex: ^(?<timestamp>[^\s]+)[\s]+CEF:1\s*\|\s*[^\s]*\s*\|\s*(?<appName>[^\s]*)\s*\|\s*[^\s]*\s*\|\s*(?<level>[^\s]+)\s*\|\s*[^\s]*\s*\|\s*[^\s]*\s*\|\s*ID=[^\s]*[\s]+THR=(?<thr>[^\s]+)[\s]+CAT=(?<cat>[^\s]+)[\s]+MSG=(?<message>.+)
-    field:
-  - regex: (?<email>[\w\.\-]+@[\w\.\-]+)
-  - regex: (?<exception>[\w\.]+Exception).*[\r\n]+\tat 
-  - regex: Start running the (master|leader)
-    addTag: producer
-  - regex: Assigning (?<assignEws>[0-9]{2,}+|[1-9]) users to EWS-Listeners
-  - regex: Assigning (?<assignAutod>[0-9]{2,}+|[1-9]) users .*for autodiscover
-  - regex: ^Started sync request
-    addTag: start_sync
-    hasProp: email
-  - regex: finished syncing,
-    addTag: end_sync
-    hasProp: email
-  - regex: Received notification event
-    addTag: recv_note
-    hasProp: email
-  - regex: Calling (?<push>\w+) Relay at
-    hasProp: email
-  - latency:
-      startTag: start_sync
-      endTag: end_sync
-      id: email
-      timeout: 300
-      countTags: recv_note 
+runs:
+  - filters:
+      - regex: ^(?<timestamp>[^\s]+)[\s]+CEF:1\s*\|\s*[^\s]*\s*\|\s*(?<appName>[^\s]*)\s*\|\s*[^\s]*\s*\|\s*(?<level>[^\s]+)\s*\|\s*[^\s]*\s*\|\s*[^\s]*\s*\|\s*ID=[^\s]*[\s]+THR=(?<thr>[^\s]+)[\s]+CAT=(?<cat>[^\s]+)[\s]+MSG=(?<message>.+)
+        field:
+  - filters:
+      - regex: (?<exception>[\w\.]+Exception).*[\r\n]+\tat
+  - filters:
+      - regex: (?<email>[\w\.\-]+@[\w\.\-]+)
+      - regex: Start running the (master|leader)
+        addTag: producer
+      - regex: Assigning (?<assignEws>[0-9]{2,}+|[1-9]) users to EWS-Listeners
+      - regex: Assigning (?<assignAutod>[0-9]{2,}+|[1-9]) users .*for autodiscover
+  - filters:
+      - regex: ^Started sync request
+        addTag: start_sync,sync
+        hasProp: email
+      - regex: finished syncing,
+        addTag: end_sync,sync
+        hasProp: email
+      - regex: Received notification event
+        addTag: recv_note,sync
+        hasProp: email
+      - regex: GetItem got (?<newEmailsCount>[\d]+) new items for
+        hasProp: email
+        addTag: getItem,sync
+      - regex: Finished running (?<rulesCount>[\d]+) rules for (?<handledEmailsCount>[\d]+)/(?<newEmailsCount>[\d]+) emails for
+        hasProp: email
+        addTag: sync
+      - regex: Sending (?<pushType>[\w]+) push to user ([\w\.\-]+@[\w\.\-]+) for (?<pushMessageCount>[\d]+) messages
+        hasProp: email
+        addTag: push
+      - regex: Calling (?<pushProxy>\w+) Relay at
+        hasProp: email
+        addTag: push
+    latencies:
+      - startTag: start_sync
+        endTag: end_sync
+        id: email
+        timeout: 300
+        countTags: recv_note

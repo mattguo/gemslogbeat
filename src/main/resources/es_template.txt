@@ -23,7 +23,7 @@
                     "type": "string",
                     "index": "not_analyzed"
                 },
-                "push": {
+                "pushProxy": {
                     "type": "string",
                     "index": "not_analyzed"
                 },
@@ -35,6 +35,22 @@
                     "type": "integer"
                 },
                 "assignEws": {
+                    "type": "integer"
+                },
+                "rulesCount": {
+                    "type": "integer"
+                },
+                "handledEmailsCount": {
+                    "type": "integer"
+                },
+                "newEmailsCount": {
+                    "type": "integer"
+                },
+                "pushType": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "pushMessageCount": {
                     "type": "integer"
                 }
             }

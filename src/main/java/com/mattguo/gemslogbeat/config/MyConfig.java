@@ -4,7 +4,7 @@ public class MyConfig {
     private String[] inputDir;
     private ElasticSearchConfig es;
     private String lineHeader;
-    private EntryFilter[] filters;
+    private EntryFilterRun[] runs = new EntryFilterRun[0];
 
     public String[] getInputDir() {
         return inputDir;
@@ -30,11 +30,11 @@ public class MyConfig {
         this.lineHeader = lineHeader;
     }
 
-    public EntryFilter[] getFilters() {
-        return filters;
+    public EntryFilterRun[] getRuns() {
+        return runs;
     }
 
-    public void setFilters(EntryFilter[] filters) {
-        this.filters = filters;
+    public void setRuns(EntryFilterRun[] runs) {
+        this.runs = runs;
     }
 }

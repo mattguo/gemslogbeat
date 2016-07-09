@@ -10,7 +10,6 @@ public class EntryFilter {
     private String addTag;
     private String hasTag;
     private String hasProp; //one kind of condition
-    private LatencyCheck latency;
     // TODO private String typecast
     // TODO private String condition
 
@@ -54,14 +53,6 @@ public class EntryFilter {
 
     public void setHasProp(String hasProp) {
         this.hasProp = hasProp;
-    }
-
-    public LatencyCheck getLatency() {
-        return latency;
-    }
-
-    public void setLatency(LatencyCheck latency) {
-        this.latency = latency;
     }
 
     private Pattern pattern;

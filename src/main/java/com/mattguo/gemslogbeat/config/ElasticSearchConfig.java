@@ -4,7 +4,10 @@ public class ElasticSearchConfig {
     private String url;
     private String index;
     private String doctype;
-    private int port;
+    private int port = 9300;
+    private int uploadBulkSize = 10000;
+    private int timeoutSeconds = 30;
+    private int retryCount = 3;
 
     public String getUrl() {
         return url;
@@ -38,4 +41,27 @@ public class ElasticSearchConfig {
         this.port = port;
     }
 
+    public int getUploadBulkSize() {
+        return uploadBulkSize;
+    }
+
+    public void setUploadBulkSize(int uploadBulkSize) {
+        this.uploadBulkSize = uploadBulkSize;
+    }
+
+    public int getTimeoutSeconds() {
+        return timeoutSeconds;
+    }
+
+    public void setTimeoutSeconds(int timeoutSeconds) {
+        this.timeoutSeconds = timeoutSeconds;
+    }
+
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
+    }
 }

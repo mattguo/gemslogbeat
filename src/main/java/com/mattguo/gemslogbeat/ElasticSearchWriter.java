@@ -11,23 +11,31 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.unit.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.mattguo.gemslogbeat.config.Cfg;
 
 public class ElasticSearchWriter {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchWriter.class);
+
+    private int maxRetry;
+    private int timeoutSeconds;
 
     private Client client;
     ListeningExecutorService uploadExectuor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
     AtomicInteger pendingUploading;
     AtomicInteger uploaded;
+    AtomicInteger retried;
+    AtomicInteger failed;
     AtomicInteger id;
 
     public ElasticSearchWriter() {
-
+        timeoutSeconds = Cfg.one().getEs().getTimeoutSeconds();
+        maxRetry = Cfg.one().getEs().getRetryCount();
     }
 
     public void open(String host, int port) throws UnknownHostException {
@@ -35,6 +43,8 @@ public class ElasticSearchWriter {
                 .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
         pendingUploading = new AtomicInteger(0);
         uploaded = new AtomicInteger(0);
+        retried = new AtomicInteger(0);
+        failed = new AtomicInteger(0);
         id = new AtomicInteger(0);
     }
 
@@ -60,22 +70,43 @@ public class ElasticSearchWriter {
         }
     }
 
-    public void uploadAsync(String index, String type, List<IndexedEntry> entries) {
+    public void uploadAsync(final String index, final String type, final List<IndexedEntry> entries) {
         final BulkRequestBuilder bulkRequest = client.prepareBulk();
         for (IndexedEntry entry : entries) {
             bulkRequest.add(client.prepareIndex(index, type, Integer.toString(id.incrementAndGet())).setSource(entry.toEsJson()));
         }
+
+        uploadAsync(bulkRequest, 0);
+    }
+
+    private void uploadAsync(final BulkRequestBuilder bulkRequest, final int retiedTimes) {
         pendingUploading.incrementAndGet();
 
         uploadExectuor.submit(new Runnable() {
             @Override
             public void run() {
-                BulkResponse bulkResponse = bulkRequest.get();
+                BulkResponse bulkResponse = bulkRequest.get(TimeValue.timeValueSeconds(timeoutSeconds));
                 int pendingVal = pendingUploading.decrementAndGet();
-                int uploadedVal = uploaded.incrementAndGet();
+
                 if (bulkResponse.hasFailures()) {
-                    LOGGER.info("Bulk upload Failed. pending:{}, uploaded:{}, err:{}", pendingVal, uploadedVal, bulkResponse.buildFailureMessage());
+                    int failedVal;
+                    int retriedVal;
+                    boolean willRetry;
+                    if (retiedTimes >= maxRetry) {
+                        failedVal = failed.incrementAndGet();
+                        retriedVal = retried.get();
+                        willRetry = false;
+                    } else {
+                        failedVal = failed.get();
+                        retriedVal = retried.incrementAndGet();
+                        willRetry = false;
+                        uploadAsync(bulkRequest, retiedTimes + 1);
+                    }
+                    LOGGER.warn("Bulk upload Failed. pending:{}, failed:{}, totalRetried:{}, retry:{}/{}, willRetry:{}, err:{}",
+                            pendingVal, failedVal, retriedVal, retiedTimes, maxRetry, willRetry,
+                            bulkResponse.buildFailureMessage());
                 } else {
+                    int uploadedVal = uploaded.incrementAndGet();
                     LOGGER.info("Bulk upload finished. pending:{}, uploaded:{}", pendingVal, uploadedVal);
                 }
             }
