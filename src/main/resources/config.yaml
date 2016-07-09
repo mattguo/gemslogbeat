@@ -44,8 +44,9 @@ runs:
         hasProp: email
         addTag: push
     latencies:
-      - startTag: start_sync
+      - name: syncTime 
+        startTag: start_sync
         endTag: end_sync
         id: email
-        timeout: 300
         countTags: recv_note
+        copyProps: email

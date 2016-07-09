@@ -17,23 +17,20 @@ import com.google.common.collect.Lists;
 import com.mattguo.gemslogbeat.config.Cfg;
 import com.mattguo.gemslogbeat.config.EntryFilter;
 import com.mattguo.gemslogbeat.config.EntryFilterRun;
-import com.mattguo.gemslogbeat.config.LatencyCheck;
+import com.mattguo.gemslogbeat.config.LatencyRule;
 
 public class Dispatcher {
     private static DateTimeFormatter iso = ISODateTimeFormat.dateTime();
     // private static DateTimeFormatter iso = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS");
     private static final Logger LOGGER = LoggerFactory.getLogger(Dispatcher.class);
 
+    private LatencyChecker latencyChecker = new LatencyChecker();
+
     public Dispatcher() {
     }
 
     List<IndexedEntry> cachedEntries = Lists.newArrayList();
     ElasticSearchWriter uploader = new ElasticSearchWriter();
-
-    class LatencyCalcKey {
-        private LatencyCheck latency;
-        private String host;
-    }
 
     public void open() throws UnknownHostException {
         uploader = new ElasticSearchWriter();
@@ -44,7 +41,7 @@ public class Dispatcher {
         // Merge new line
         GemsLogLine indexedLine = new GemsLogLine();
         indexedLine.getProperties().put("host", host);
-        for(EntryFilterRun run : Cfg.one().getRuns()) {
+        for (EntryFilterRun run : Cfg.one().getRuns()) {
             for (EntryFilter filter : run.getFilters()) {
                 if (!Strings.isNullOrEmpty(filter.getHasProp()) && !indexedLine.getProperties().containsKey(filter.getHasProp())) {
                     continue;
@@ -80,11 +77,12 @@ public class Dispatcher {
                 }
             }
 
-            for (LatencyCheck latency : run.getLatencies()) {
-                ;
+            for (LatencyRule latencyRule : run.getLatencies()) {
+                LatencyIndexedEntry latencyEntry = latencyChecker.onNewLine(latencyRule, host, indexedLine);
+                if (latencyEntry != null)
+                    cachedEntries.add(latencyEntry);
             }
         }
-
 
         // Run through regex to parse message and add tags/properties
 

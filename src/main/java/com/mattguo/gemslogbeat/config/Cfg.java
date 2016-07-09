@@ -36,7 +36,7 @@ public class Cfg {
             myConfigDescription.putListPropertyType("runs", EntryFilterRun.class);
             TypeDescription filterRunDescription = new TypeDescription(EntryFilterRun.class);
             filterRunDescription.putListPropertyType("filters", EntryFilter.class);
-            filterRunDescription.putListPropertyType("latencies", LatencyCheck.class);
+            filterRunDescription.putListPropertyType("latencies", LatencyRule.class);
             constructor.addTypeDescription(myConfigDescription);
             constructor.addTypeDescription(filterRunDescription);
             Yaml yaml = new Yaml(constructor);
