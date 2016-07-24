@@ -1,5 +1,5 @@
 inputDir:
-  - F:\logs\psr\wiblogs_gbs66
+  - H:\logs\12316\3
 es:
   url: localhost
   port: 9300
@@ -21,6 +21,7 @@ runs:
         addTag: producer
       - regex: Assigning (?<assignEws>[0-9]{2,}+|[1-9]) users to EWS-Listeners
       - regex: Assigning (?<assignAutod>[0-9]{2,}+|[1-9]) users .*for autodiscover
+      - regex: Found (?<pickupEws>[0-9]{2,}+|[1-9]) new or modified users
   - filters:
       - regex: ^Started sync request
         addTag: start_sync,sync
