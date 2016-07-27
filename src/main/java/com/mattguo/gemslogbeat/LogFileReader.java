@@ -7,10 +7,12 @@ import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.io.Files;
 import com.mattguo.gemslogbeat.config.Cfg;
 
 public class LogFileReader {
@@ -46,17 +48,15 @@ public class LogFileReader {
     }
 
     public void readDir(String dir, Dispatcher dispatcher){
-        File directory = new File(dir);
-        File[] fList = directory.listFiles();
-        for (File file : fList) {
-            if (file.isFile()) {
-                LOGGER.info("Start to handle file: " + file.getPath());
+    	File directory = new File(dir);
+    	for (File file : Files.fileTreeTraverser().preOrderTraversal(directory)) {
+    		if (file.isFile()) {
+                LOGGER.info("Start to handle file: {}", file.getPath());
                 read(file.getPath());
             } else {
-                LOGGER.info("Start to handle sub-dir: " + file.getPath());
-                readDir(file.getPath(), dispatcher);
+            	LOGGER.info("Ignore the sub-dir: {}", file.getPath());
             }
-        }
+    	}
     }
 
     private static String removeUTF8BOM(String s) {

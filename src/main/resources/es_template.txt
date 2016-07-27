@@ -37,6 +37,9 @@
                 "assignEws": {
                     "type": "integer"
                 },
+                "pickupEws": {
+                    "type": "integer"
+                },
                 "rulesCount": {
                     "type": "integer"
                 },
