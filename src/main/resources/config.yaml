@@ -1,7 +1,7 @@
 inputDir:
   - F:\logs\psr\wiblogs_gbs66
 es:
-  url: localhost
+  url: search-mattes-dbiizqc35zhgrmqtzrnx3mqt6q.ap-southeast-1.es.amazonaws.com
   port: 9300
   index: gems-test
   doctype: gems
@@ -48,5 +48,3 @@ runs:
         startTag: start_sync
         endTag: end_sync
         id: email
-        countTags: recv_note
-        copyProps: email

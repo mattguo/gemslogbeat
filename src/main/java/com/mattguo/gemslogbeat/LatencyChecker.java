@@ -71,9 +71,9 @@ public class LatencyChecker {
         LatencyDataKey key = new LatencyDataKey(latencyRule, host, idStr);
         if (indexedLine.getTags().contains(latencyRule.getStartTag())) {
             if (latencyData.containsKey(key)) {
-                LOGGER.warn("{} found startTag but is already in latencyData, ignore previous one at. newTs:{} oldTs:{}", key,
-                        indexedLine.getProperties().get("@timestamp"),
-                        latencyData.get(key).startLine.getProperties().get("@timestamp"));
+                LOGGER.warn("{} found startTag but is already in latencyData, ignore previous one at {}. newTs:{}", key,
+                        latencyData.get(key).startLine.getProperties().get("@timestamp"),
+                        indexedLine.getProperties().get("@timestamp"));
             }
             // TODO handle copyProps
             latencyData.put(key, new LatencyDataValue(indexedLine));
@@ -90,7 +90,7 @@ public class LatencyChecker {
             Date startTime = (Date) context.startLine.getProperties().get("@timestamp");
             Date endTime = (Date) indexedLine.getProperties().get("@timestamp");
 
-            LatencyIndexedEntry latencyLine = new LatencyIndexedEntry(startTime, endTime, host, idStr, latencyRule.getName());
+            LatencyIndexedEntry latencyLine = new LatencyIndexedEntry(startTime, endTime, idStr, latencyRule.getName());
             // TODO handle copyProps
             return latencyLine;
         }

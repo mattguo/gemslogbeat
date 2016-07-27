@@ -1,5 +1,8 @@
 package com.mattguo.gemslogbeat;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
@@ -12,6 +15,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +44,7 @@ public class ElasticSearchWriter {
 
     public void open(String host, int port) throws UnknownHostException {
         client = TransportClient.builder().build()
-                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
+                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), 9300));
         pendingUploading = new AtomicInteger(0);
         uploaded = new AtomicInteger(0);
         retried = new AtomicInteger(0);
@@ -73,7 +77,15 @@ public class ElasticSearchWriter {
     public void uploadAsync(final String index, final String type, final List<IndexedEntry> entries) {
         final BulkRequestBuilder bulkRequest = client.prepareBulk();
         for (IndexedEntry entry : entries) {
-            bulkRequest.add(client.prepareIndex(index, type, Integer.toString(id.incrementAndGet())).setSource(entry.toEsJson()));
+            XContentBuilder jsonBuilder;
+            try {
+                jsonBuilder = jsonBuilder();
+                entry.toEsJson(jsonBuilder, null);
+            } catch (IOException e) {
+                LOGGER.warn("Failed to serialize entry {}", entry);
+                continue;
+            }
+            bulkRequest.add(client.prepareIndex(index, type, Integer.toString(id.incrementAndGet())).setSource(jsonBuilder));
         }
 
         uploadAsync(bulkRequest, 0);

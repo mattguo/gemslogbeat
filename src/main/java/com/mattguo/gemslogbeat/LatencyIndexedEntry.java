@@ -1,30 +1,21 @@
 package com.mattguo.gemslogbeat;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-
 import java.io.IOException;
 import java.util.Date;
-import java.util.Map;
-import java.util.Set;
 
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
 public class LatencyIndexedEntry implements IndexedEntry {
-    public LatencyIndexedEntry(Date startTime, Date endTime, String host, String id, String name) {
+    public LatencyIndexedEntry(Date startTime, Date endTime, String correlateId, String name) {
         this.startTime = startTime;
         this.endTime = endTime;
-        this.host = host;
-        this.id = id;
+        this.correlateId = correlateId;
         this.name = name;
     }
 
     private Date startTime;
     private Date endTime;
-    private String host;
-    private String id;
+    private String correlateId;
     private String name;
 
     public Date getStartTime() {
@@ -35,12 +26,8 @@ public class LatencyIndexedEntry implements IndexedEntry {
         return endTime;
     }
 
-    public String getHost() {
-        return host;
-    }
-
-    public String getId() {
-        return id;
+    public String getCorrelateId() {
+        return correlateId;
     }
 
     public String getName() {
@@ -51,39 +38,25 @@ public class LatencyIndexedEntry implements IndexedEntry {
         return (int) (endTime.getTime() - startTime.getTime());
     }
 
-    private Map<String, Integer> counts = Maps.newHashMap();
-    private Set<String> tags = Sets.newHashSet("latency");
-
-    public Map<String, Integer> getCounts() {
-        return counts;
-    }
-
-    public Set<String> getTags() {
-        return tags;
-    }
-
     @Override
-    public XContentBuilder toEsJson() {
-        try {
-            XContentBuilder obj = jsonBuilder().startObject();
-            obj.field("host", host);
-            obj.field("id", id);
-            obj.field("name", name);
-            obj.field("startTime", startTime);
-            obj.field("endTime", startTime);
-            obj.field("@timestamp", startTime);
-            obj.field(" elapsedMs", elapsedMs());
+    public void toEsJson(XContentBuilder jsonBuilder, String nestedName) throws IOException {
+        // XContentBuilder obj = nestedName == null ? jsonBuilder.startObject() : jsonBuilder.startObject(nestedName);
+        // obj.field("correlateId", correlateId);
+        // obj.field("name", name);
+        // obj.field("startTime", startTime);
+        // obj.field("endTime", startTime);
+        // obj.field(" elapsedMs", elapsedMs());
+        // obj.endObject();
 
-            for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-                obj.field(entry.getKey() + "_count", entry.getValue());
-            }
+        XContentBuilder obj = nestedName == null ? jsonBuilder.startObject() : jsonBuilder;
+        String nestedPrefix = nestedName == null ?  "" : nestedName + "_";
+        obj.field(nestedPrefix + "correlateId", correlateId);
+        obj.field(nestedPrefix + "name", name);
+        obj.field(nestedPrefix + "startTime", startTime);
+        obj.field(nestedPrefix + "endTime", startTime);
+        obj.field(nestedPrefix + "elapsedMs", elapsedMs());
 
-            String[] tags = new String[getTags().size()];
-            obj.field("tags", getTags().toArray(tags));
+        if (nestedName == null)
             obj.endObject();
-            return obj;
-        } catch (IOException e) {
-            return null;
-        }
     }
 }

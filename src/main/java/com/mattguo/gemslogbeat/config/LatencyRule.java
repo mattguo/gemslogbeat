@@ -1,14 +1,10 @@
 package com.mattguo.gemslogbeat.config;
 
-import com.google.common.base.Splitter;
-
 public class LatencyRule {
     private String name;
     private String startTag;
     private String endTag;
     private String id;
-    private String countTags;
-    private String copyProps;
 
     public String getName() {
         return name;
@@ -40,30 +36,6 @@ public class LatencyRule {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getCountTags() {
-        return countTags;
-    }
-
-    public Iterable<String> getCountTagsCollection() {
-        return Splitter.on(",").split(countTags);
-    }
-
-    public void setCountTags(String countTags) {
-        this.countTags = countTags;
-    }
-
-    public String setCopyProps() {
-        return copyProps;
-    }
-
-    public Iterable<String> getCopyPropsCollection() {
-        return Splitter.on(",").split(copyProps);
-    }
-
-    public void setCopyProps(String copyProps) {
-        this.copyProps = copyProps;
     }
 
     @Override

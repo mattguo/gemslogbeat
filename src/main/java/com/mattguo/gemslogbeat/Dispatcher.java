@@ -80,7 +80,7 @@ public class Dispatcher {
             for (LatencyRule latencyRule : run.getLatencies()) {
                 LatencyIndexedEntry latencyEntry = latencyChecker.onNewLine(latencyRule, host, indexedLine);
                 if (latencyEntry != null)
-                    cachedEntries.add(latencyEntry);
+                    indexedLine.getProperties().put("latency", latencyEntry);
             }
         }
 

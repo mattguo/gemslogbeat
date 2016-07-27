@@ -52,6 +52,23 @@
                 },
                 "pushMessageCount": {
                     "type": "integer"
+                },
+                "latency_startTime": {
+                	"type": "date"
+                },
+                "latency_endTime": {
+                	"type": "date"
+                },
+                "latency_elapsedMs": {
+                	"type": "integer"
+                },
+                "latency_name": {
+                	"type": "string",
+                    "index": "not_analyzed"
+                },
+                "latency_correlateId": {
+                	"type": "string",
+                    "index": "not_analyzed"
                 }
             }
         }
