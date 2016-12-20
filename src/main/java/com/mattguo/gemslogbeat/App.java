@@ -7,7 +7,7 @@ import com.mattguo.gemslogbeat.config.Cfg;
 public class App {
 
     public static void main(String[] args) throws InterruptedException {
-        LogFileReader fr = new LogFileReader();
+        LogFileReader fr = new LogFileReader(new Dispatcher());
         StopWatch sw = new StopWatch();
         sw.start();
         fr.readDirs(Cfg.one().getInputDir());

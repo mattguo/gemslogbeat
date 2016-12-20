@@ -19,9 +19,7 @@ import com.mattguo.gemslogbeat.config.EntryFilter;
 import com.mattguo.gemslogbeat.config.EntryFilterRun;
 import com.mattguo.gemslogbeat.config.LatencyRule;
 
-public class Dispatcher {
-    private static DateTimeFormatter iso = ISODateTimeFormat.dateTime();
-    // private static DateTimeFormatter iso = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS");
+public class Dispatcher implements IDispatcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(Dispatcher.class);
 
     private LatencyChecker latencyChecker = new LatencyChecker();

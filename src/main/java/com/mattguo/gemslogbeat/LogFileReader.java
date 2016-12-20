@@ -22,32 +22,32 @@ public class LogFileReader {
 
 	public static final String UTF8_BOM = "\uFEFF";
 
-    private Dispatcher dispatcher;
+    private IDispatcher dispatcher;
 
     final static Pattern fileNamePattern = Pattern.compile("([^\\s\\\\/]+)_\\d\\d\\d\\d-\\d\\d-\\d\\d-\\d\\d-\\d\\d\\.log$");
 
     private Multiline multiline;
 
-    public LogFileReader() {
+    public LogFileReader(IDispatcher dispatcher) {
+    	this.dispatcher = dispatcher;
     	multiline= new Multiline(Cfg.one().getLineHeader());
     }
 
     public void readDirs(String[] dirs) {
-        dispatcher = new Dispatcher();
         try {
             dispatcher.open();
-        } catch (UnknownHostException ex) {
+        } catch (Exception ex) {
             LOGGER.error("Failed to open dispatcher.", ex);
             return;
         }
 
         for(String dir : dirs)
-            readDir(dir, dispatcher);
+            readDir(dir);
 
         dispatcher.close();
     }
 
-    public void readDir(String dir, Dispatcher dispatcher){
+    public void readDir(String dir){
     	File directory = new File(dir);
     	for (File file : Files.fileTreeTraverser().preOrderTraversal(directory)) {
     		if (file.isFile()) {
